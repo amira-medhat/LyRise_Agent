@@ -1,5 +1,11 @@
 # LyRise Voice Agent - Complete Implementation Guide
 
+## 🖼️ User Interface
+
+![LyRise Voice Agent UI](images/System_UI.png)
+
+---
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Project Structure](#project-structure)
