@@ -1,0 +1,111 @@
+# ============================================
+# LyRise Voice Agent - Root .gitignore
+# ============================================
+
+# --- Secrets and Credentials ---
+# CRITICAL: Never commit API keys, tokens, or credentials!
+.env
+*.pem
+*.key
+*.p12
+
+# Google Cloud credentials
+**/credentials/
+**/dialogflow-credentials.json
+**/calendar-credentials.json
+**/google-credentials.json
+
+# OAuth tokens
+**/token.pickle
+**/token.json
+
+# API Keys
+**/*api_key*
+**/*secret*
+
+# --- Database Files ---
+# Exclude databases with actual appointment data
+**/database/*.db
+**/database/*.xlsx
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+schedules.db
+schedules.xlsx
+
+# --- Temporary Files ---
+# Audio files from Whisper processing
+*.wav
+*.mp3
+*.ogg
+*.webm
+temp_audio_*
+**/temp/
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+.env/
+my_env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Python Cache & Compiled Files ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- IDE / Editor Configuration ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# --- Operating System Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# --- Build & Distribution Artifacts ---
+build/
+dist/
+*.spec
+
+# --- Logs ---
+*.log
+logs/
+**/*.log
+
+# --- Testing ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Documentation Build ---
+docs/_build/
+site/
