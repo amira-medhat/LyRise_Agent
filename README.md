@@ -106,7 +106,7 @@ Whisper is OpenAI's state-of-the-art speech recognition model, accessed via Groq
 
 **Implementation:**
 - Frontend: MediaRecorder API captures audio
-- Backend: Groq Whisper API (`whisper-large-v3-turbo`)
+- Backend: Groq Whisper API (`whisper-large-v3`)
 - TTS: gTTS (Google Text-to-Speech) for voice responses
 
 ---
@@ -162,7 +162,7 @@ Uses local (Ollama) or cloud (OpenAI) LLMs for natural language understanding an
 
 **Supported LLMs:**
 - **Ollama** (Local): llama3.2, mistral, etc.
-- **OpenAI** (Cloud): GPT-3.5, GPT-4
+- **OpenAI** (Cloud): GPT-3.5, GPT-5
 
 **Advantages:**
 - More flexible and customizable
@@ -194,10 +194,8 @@ pip install -r requirements.txt
 ```
 
 ### 3. Database Setup
-Each version includes a database initialization script:
-```bash
-python excel_to_db.py  # Converts Excel schedule to SQLite
-```
+Each version includes a database initialization script, update its path in the .env file.
+
 
 ---
 
@@ -358,10 +356,7 @@ cp .env.example .env
 # - CLINIC_EMAIL
 # - DATABASE_PATH
 
-# 3. Initialize database
-python excel_to_db.py
-
-# 4. Run application
+# 3. Run application
 python app.py
 ```
 
@@ -407,10 +402,7 @@ cp .env.example .env
 # - DATABASE_PATH
 # - OPENAI_API_KEY (if using OpenAI instead)
 
-# 5. Initialize database
-python excel_to_db.py
-
-# 6. Run application
+# 5. Run application
 python app.py
 ```
 
@@ -455,10 +447,7 @@ cp .env.example .env
 # - CLINIC_EMAIL
 # - DATABASE_PATH
 
-# 3. Initialize database
-python excel_to_db.py
-
-# 4. Run application
+# 3. Run application
 python app.py
 ```
 
@@ -511,10 +500,7 @@ cp .env.example .env
 # - DATABASE_PATH
 # - OPENAI_API_KEY (if using OpenAI)
 
-# 5. Initialize database
-python excel_to_db.py
-
-# 6. Run application
+# 5. Run application
 python app.py
 ```
 
@@ -556,98 +542,6 @@ python app.py
 
 ---
 
-## 🧪 Testing the System
-
-### Test Scenarios
-
-**1. Complete Booking:**
-```
-"Book appointment with Dr Mark tomorrow at 9:30 AM"
-```
-
-**2. Multi-turn Booking:**
-```
-User: "I want to book an appointment"
-Agent: "Which doctor would you like to see?"
-User: "Dr Sarah"
-Agent: "What date and time?"
-User: "Next Monday at 2 PM"
-```
-
-**3. Check Availability:**
-```
-"Is Dr Mark available tomorrow?"
-"Show me Dr Sarah's schedule for next week"
-```
-
-**4. Greeting:**
-```
-"Hello"
-"Good morning"
-```
-
----
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-**1. Microphone not working (Web Speech API)**
-- Check browser permissions
-- Use Chrome or Edge
-- Ensure HTTPS or localhost
-
-**2. Dialogflow authentication error**
-- Verify credentials file path
-- Check project ID matches
-- Ensure API is enabled
-
-**3. Ollama connection refused**
-- Start Ollama: `ollama serve`
-- Check port 11434 is free
-- Verify model is pulled
-
-**4. Whisper transcription fails**
-- Check Groq API key
-- Verify internet connection
-- Check audio format
-
-**5. Calendar integration not working**
-- Run OAuth flow first time
-- Check calendar-credentials.json
-- Verify Calendar API enabled
-
----
-
-## 📝 Environment Variables Reference
-
-### Dialogflow Versions
-```bash
-DIALOGFLOW_PROJECT_ID="your-project-id"
-DIALOGFLOW_CREDENTIALS="credentials/dialogflow-credentials.json"
-CALENDER_CREDENTIALS="credentials/calendar-credentials.json"
-CLINIC_EMAIL="clinic@example.com"
-DATABASE_PATH="database/schedules.db"
-GROQ_API_KEY="gsk_..."  # Whisper version only
-```
-
-### LLM Versions
-```bash
-# Ollama Configuration
-OLLAMA_HOST="http://localhost:11434"
-OLLAMA_MODEL="llama3.2"
-
-# OpenAI Configuration (alternative)
-OPENAI_API_KEY="sk-..."
-
-# Calendar & Database
-CALENDER_CREDENTIALS="credentials/calendar-credentials.json"
-CLINIC_EMAIL="clinic@example.com"
-DATABASE_PATH="database/schedules.db"
-```
-
----
-
 ## 🎯 Recommended Approach
 
 **For Production:**
@@ -663,12 +557,6 @@ DATABASE_PATH="database/schedules.db"
 - Reliable NLU
 - Good for Chrome-only environments
 
-**For Cost-Effective:**
-- **Web Speech API + LLM** (Version 2)
-- Free speech recognition
-- Local LLM with Ollama
-- No API costs
-
 ---
 
 ## 📚 Additional Resources
@@ -680,64 +568,3 @@ DATABASE_PATH="database/schedules.db"
 - [Google Calendar API](https://developers.google.com/calendar)
 
 ---
-
-## 🤝 Contributing
-
-Each version is self-contained and can be modified independently. Key files to customize:
-
-- `app.py` - Main Flask routes
-- `services/` - Business logic
-- `static/js/main.js` - Frontend behavior
-- `llm/` - LLM prompts and logic (LLM versions)
-- `services/dialogflow_handler.py` - Dialogflow integration (Dialogflow versions)
-
----
-
-## 📄 License
-
-This project is part of the LyRise Voice Agent system.
-
----
-
-## 🎉 Quick Start Summary
-
-**Choose your approach:**
-
-1. **Web Speech + Dialogflow**: Chrome only, robust NLU
-   ```bash
-   cd web_speech_api_version/dialogflow_version
-   pip install -r requirements.txt
-   # Configure .env with Dialogflow credentials
-   python app.py
-   ```
-
-2. **Web Speech + LLM**: Chrome only, flexible, local
-   ```bash
-   cd web_speech_api_version/llm_version
-   pip install -r requirements.txt
-   ollama serve  # In separate terminal
-   python app.py
-   ```
-
-3. **Whisper + Dialogflow**: All browsers, accurate, robust
-   ```bash
-   cd whisper_version/dialogflow_version
-   pip install -r requirements.txt
-   # Configure .env with Groq + Dialogflow credentials
-   python app.py
-   ```
-
-4. **Whisper + LLM**: All browsers, most flexible
-   ```bash
-   cd whisper_version/llm_version
-   pip install -r requirements.txt
-   ollama serve  # In separate terminal
-   # Configure .env with Groq API key
-   python app.py
-   ```
-
-**Then open:** `http://localhost:5000`
-
----
-
-**Happy Coding! 🚀**
