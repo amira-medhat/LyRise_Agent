@@ -71,7 +71,6 @@ def synthesize_speech():
         return jsonify({'error': str(e)}), 500
 
 
-# --- THIS IS THE NEW, RESTRUCTURED CHAT FUNCTION ---
 @app.route('/chat', methods=['POST'])
 def chat():
     try:

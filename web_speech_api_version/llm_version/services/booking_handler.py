@@ -33,7 +33,6 @@ def get_calendar_service():
     
     return build('calendar', 'v3', credentials=creds)
 
-# --- MODIFIED 'book_appointment' FUNCTION ---
 def book_appointment(doctor, appointment_datetime):
     """
     Books an appointment by:
@@ -124,7 +123,6 @@ def book_appointment(doctor, appointment_datetime):
         conn.close()
         return False, f"Failed to book appointment. An unknown error occurred: {e}"
 
-# --- NEW 'cancel_appointment' FUNCTION ---
 def cancel_appointment_flow(doctor, appointment_datetime):
     """
     Cancels an appointment by:

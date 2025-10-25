@@ -193,7 +193,6 @@ body {
 .welcome-message {
     display: flex;
     gap: 16px;
-    /* animation: slideIn 0.5s ease-out;  <-- REMOVED */
 }
 
 .bot-avatar {
@@ -474,7 +473,6 @@ body {
     }
 }
 
-/* --- NEW STYLES FOR LAPTOP LAYOUT --- */
 
 /* This is the new wrapper for the two-column layout */
 .welcome-container {

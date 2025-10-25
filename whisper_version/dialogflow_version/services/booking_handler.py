@@ -29,7 +29,6 @@ def get_calendar_service():
     
     return build('calendar', 'v3', credentials=creds)
 
-# --- MODIFIED 'book_appointment' FUNCTION ---
 def book_appointment(doctor, appointment_datetime):
     """
     Books an appointment by:
@@ -110,7 +109,6 @@ def book_appointment(doctor, appointment_datetime):
         print(f"Booking error: {e}")
         return False, f"Failed to book appointment. An unknown error occurred: {e}"
 
-# --- NEW 'cancel_appointment' FUNCTION ---
 def cancel_appointment_flow(doctor, appointment_datetime):
     """
     Cancels an appointment by:
@@ -186,7 +184,6 @@ def cancel_appointment_flow(doctor, appointment_datetime):
 
 def validate_slot(doctor, appointment_datetime):
     """Check if a slot is available. Returns: ('available'|'booked'|'not_found'|'error')"""
-    # This function remains unchanged, but I'm including it so you can copy the whole file.
     try:
         db_path = os.getenv('DATABASE_PATH', 'clinic.db')
         conn = sqlite3.connect(db_path, timeout=10, check_same_thread=False)

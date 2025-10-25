@@ -1,8 +1,3 @@
-# =====================================================
-# app.py — LLM-based Clinic Voice Automation Agent
-# Context-aware, OpenAI-powered, always refreshed context
-# =====================================================
-
 import os
 import uuid
 import traceback
@@ -26,7 +21,7 @@ load_dotenv()
 app = Flask(__name__)
 
 LOCAL_TIMEZONE = pytz.timezone("Africa/Cairo")
-llm = LLMManager()  # intelligent conversation engine
+llm = LLMManager()
 
 
 
@@ -82,7 +77,7 @@ def chat():
 
         print(f"[DEBUG] Intent: {intent_type}, Doctor: {doctor}, Datetime: {datetime_param}")
 
-        # === Step 3: Functional actions ===
+        # === Step 2: Functional actions ===
         if intent_type == "list" and datetime_param:
             dt = parse_datetime_param(datetime_param)
             if dt:
@@ -139,7 +134,7 @@ def chat():
                     # else: reply already set by LLM (confirmation question)
 
 
-        # === Step 4: Return combined response ===
+        # === Step 3: Return combined response ===
         return jsonify({"reply": reply})
 
     except Exception as e:

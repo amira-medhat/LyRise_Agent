@@ -13,13 +13,6 @@ google-credentials.json
 token.pickle
 token.json
 
-# Database files with actual data
-database/*.db
-database/*.xlsx
-*.db
-*.sqlite
-*.sqlite3
-
 # Temporary audio files (Whisper version)
 *.wav
 *.mp3

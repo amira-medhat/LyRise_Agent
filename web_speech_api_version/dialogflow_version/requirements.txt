@@ -1,14 +1,6 @@
-# Core web framework
 Flask==3.0.0
-
-# Google Cloud client for Dialogflow
 google-cloud-dialogflow==2.27.0
-
-# For loading environment variables from the .env file
 python-dotenv==1.0.0
-
-# --- For the BONUS Calendar integration ---
-# Google API client library
 google-api-python-client==2.106.0
 google-auth-httplib2==0.1.1
 google-auth-oauthlib==1.1.0

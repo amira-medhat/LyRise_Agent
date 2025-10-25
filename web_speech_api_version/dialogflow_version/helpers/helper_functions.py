@@ -4,9 +4,6 @@ import pytz
 LOCAL_TIMEZONE = pytz.timezone("Africa/Cairo")
 
 
-# ----------------------------------------
-# Helper Functions
-# ----------------------------------------
 def parse_datetime_param(date_param):
     """Parse a datetime parameter from LLM or JSON input, keeping local time unchanged."""
     try:

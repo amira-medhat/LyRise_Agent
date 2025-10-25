@@ -234,7 +234,7 @@ Do not include any explanation, just the JSON.
                 date = parsed.strftime("%Y-%m-%dT%H:%M:%S")
         reply = ""
 
-        # Step 3: Handle based on intent
+        # Step 2: Handle based on intent
         if structured["type"] == "list":
             if not doctor:
                 reply = "Which doctor would you like me to check availability for?"
@@ -298,7 +298,7 @@ Do not include any explanation, just the JSON.
             except Exception:
                 reply = "I'm happy to help with scheduling or general questions!"
 
-        # Step 4: Save history
+        # Step 3: Save history
         self.conversation.append({"role": "assistant", "content": reply})
 
         return {

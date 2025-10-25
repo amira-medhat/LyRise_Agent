@@ -23,16 +23,6 @@
 **/*api_key*
 **/*secret*
 
-# --- Database Files ---
-# Exclude databases with actual appointment data
-**/database/*.db
-**/database/*.xlsx
-**/*.db
-**/*.sqlite
-**/*.sqlite3
-schedules.db
-schedules.xlsx
-
 # --- Temporary Files ---
 # Audio files from Whisper processing
 *.wav
