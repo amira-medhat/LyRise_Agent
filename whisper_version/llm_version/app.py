@@ -2,17 +2,19 @@ import os
 import uuid
 import traceback
 import sqlite3
-from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
-import pytz
 
 # --- Internal Imports ---
-# from llm.llm_manager_Ollama import LLMManager        # Ollama version
-from llm.llm_manager_OpenAI import LLMManager        # OpenAI version
-from services.schedule_handler import ScheduleHandler
-from services.booking_handler import book_appointment, validate_slot, cancel_appointment_flow
-from helpers.helper_functions import parse_datetime_param, parse_date_range_param
+
+from llm.llm_manager_OpenAI import (
+    Agent, 
+    generate_react_prompt, 
+    known_actions, 
+    action_re
+)
+# --- Import the session manager ---
+from services.session_manager import get_session, update_session
 
 # ----------------------------------------
 # Setup
@@ -20,9 +22,10 @@ from helpers.helper_functions import parse_datetime_param, parse_date_range_para
 load_dotenv()
 app = Flask(__name__)
 
-LOCAL_TIMEZONE = pytz.timezone("Africa/Cairo")
-llm = LLMManager()
-
+# --- STOP: The global LLMManager is GONE. ---
+# We no longer have a global 'llm' object. 
+# Agents are now created per-session.
+# --- END ---
 
 
 # ----------------------------------------
@@ -35,7 +38,10 @@ def index():
 
 @app.route("/doctors", methods=["GET"])
 def get_doctors():
-    """Return all doctors and specialties from DB."""
+    """
+    (This route is unchanged)
+    Return all doctors and specialties from DB for the frontend.
+    """
     try:
         db_path = os.getenv("DATABASE_PATH", "clinic.db")
         conn = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
@@ -57,103 +63,84 @@ def get_doctors():
 @app.route("/chat", methods=["POST"])
 def chat():
     """
-    Main endpoint: handles user messages.
-    Uses LLMManager to infer context, intent, and generate replies.
-    Always refreshes system context to reflect time and doctors list.
+    Main endpoint: handles user messages using a ReAct loop.
+    It manages the agent's state (history) and executes tools.
     """
-
-    schedule_handler = ScheduleHandler()
     try:
         user_message = request.json["message"]
+        # Get a session ID from the frontend, or create a default one
+        session_id = request.json.get("session_id", "default_session")
 
-        # === Step 1: Let LLM handle reasoning ===
-        llm_response = llm.process_query(user_message)
-        print(f"[DEBUG] LLM response: {llm_response}")
+        # === Step 1: Get or Create the Agent for this session ===
+        session_data = get_session(session_id)
+        if "agent" not in session_data:
+            print(f"[DEBUG] Creating new agent for session: {session_id}")
+            # Generate the master system prompt with tools, doctors, etc.
+            system_prompt = generate_react_prompt()
+            # Create a new agent instance
+            agent = Agent(system=system_prompt)
+            session_data["agent"] = agent
+        else:
+            # Retrieve the existing agent (with its conversation history)
+            agent = session_data["agent"]
 
-        reply = llm_response.get("reply", "I'm not sure how to respond.")
-        intent_type = llm_response.get("type", "chat")
-        doctor = llm_response.get("doctor")
-        datetime_param = llm_response.get("datetime")
+        # === Step 2: Run the ReAct Loop ===
+        # This loop replaces your ENTIRE old if/elif block
+        
+        final_answer = "I'm sorry, I seem to have run into an issue." # Default
+        next_prompt = user_message
+        
+        # Limit the number of turns to prevent infinite loops
+        for i in range(5): 
+            
+            # --- Call the LLM ---
+            # agent() adds user_message to history, gets LLM reply, adds reply to history
+            result = agent(next_prompt) 
+            print(f"[DEBUG] ReAct Turn {i+1} (Session: {session_id}):\n{result}")
 
-        print(f"[DEBUG] Intent: {intent_type}, Doctor: {doctor}, Datetime: {datetime_param}")
+            # --- Check for an Action ---
+            actions = [action_re.match(a) for a in result.split('\n') if action_re.match(a)]
 
-        # === Step 2: Functional actions ===
-        if intent_type == "list":
-            print(f"[DEBUG] Processing list intent for doctor: {doctor}, datetime: {datetime_param}")
-
-            if doctor and datetime_param:
-                dt = parse_datetime_param(datetime_param)
-                if dt:
-                    start_dt = dt.astimezone(LOCAL_TIMEZONE).replace(hour=0, minute=0, second=0, microsecond=0)
-                    end_dt = start_dt + timedelta(days=1)
-                    print(f"[DEBUG] Listing slots for {doctor} from {start_dt} to {end_dt}")
-
-                    slots, doctor_exists = schedule_handler.get_available_slots(start_dt, end_dt, doctor)
-                    print(f"[DEBUG] schedule_handler returned slots={slots}, doctor_exists={doctor_exists}")
-
-                    if slots is None:
-                        reply = "I'm having trouble reading the schedule."
-                    elif doctor_exists is False:
-                        reply = f"I couldn't find {doctor} in our clinic records."
-                    elif not slots:
-                        reply = f"{doctor} has no available slots on that day."
-                    else:
-                        valid_slots = [s for s in slots if s]  # remove None values just in case
-                        reply = f"{doctor} has these open slots: {', '.join(valid_slots)}."
+            if actions:
+                # --- Execute Action ---
+                action, action_input_json = actions[0].groups()
+                
+                if action not in known_actions:
+                    observation = f"Error: Unknown action '{action}'. Please use one of: {list(known_actions.keys())}"
                 else:
-                    reply = f"Could you clarify the date you'd like to check for {doctor}?"
-
-            elif doctor and not datetime_param:
-                reply = f"For which date would you like to check {doctor}'s schedule?"
-
-            elif datetime_param and not doctor:
-                reply = "Which doctor's schedule would you like to check for that date?"
+                    # --- Call the Tool ---
+                    try:
+                        print(f" -- Running Tool: {action}({action_input_json})")
+                        # The tool wrapper (e.g., tool_check_availability) is called here
+                        observation = known_actions[action](action_input_json)
+                    except Exception as e:
+                        print(f"[ERROR] Tool execution failed: {e}")
+                        traceback.print_exc()
+                        observation = f"Error running action {action}: {e}"
+                
+                print(f" -- Observation: {observation}")
+                # Feed the observation back into the agent for the next loop
+                next_prompt = f"Observation: {observation}"
 
             else:
-                reply = "Please tell me which doctor and date you'd like to check availability for."
+                # --- No Action: This is the Final Answer ---
+                # We parse the result to send *only* the answer part
+                if "Answer:" in result:
+                    # Split on "Answer:" and take the last part
+                    final_answer = result.split("Answer:", 1)[-1].strip()
+                else:
+                    # Fallback if it's a simple chat reply without "Answer:"
+                    final_answer = result
+                
+                break # Exit the loop
+        
+        # === Step 3: Save the agent's updated state (history) ===
+        # This is technically already done since 'agent' is a mutable object
+        # but update_session is good practice.
+        update_session(session_id, "agent", agent)
 
-
-
-        elif intent_type == "book":
-            print(f"[DEBUG] Processing booking for doctor: {doctor}, datetime: {datetime_param}")
-            if doctor and datetime_param:
-                dt = parse_datetime_param(datetime_param)
-                if dt:
-                    is_confirmation = llm_response.get("is_confirmation", False)
-                    appointment_dt = dt.astimezone(LOCAL_TIMEZONE).replace(tzinfo=None)
-                    slot_status = validate_slot(doctor, appointment_dt)
-                    print(f"[DEBUG] validate_slot returned: {slot_status} for {doctor} at {appointment_dt}")
-                    print(f"[DEBUG] slot_status is {slot_status} is_confirmation: {is_confirmation}")
-
-                    if slot_status == "available":
-                        if is_confirmation:
-                            print(f"[DEBUG] Proceeding to book appointment for {doctor} at {appointment_dt}")
-                            success, message = book_appointment(doctor, appointment_dt)
-                            print(f"[DEBUG] book_appointment has been called with success {success} and message {message}")
-                            reply = message if success else "Booking failed, please try again."
-                        # else: reply already set by LLM (confirmation question)
-                    elif slot_status == "booked":
-                        reply = f"Sorry, this slot is already booked for {doctor}."
-                    elif slot_status == "not_found":
-                        reply = f"{doctor} doesn't have availability at that time."
-                    else:
-                        reply = "Something went wrong while checking availability."
-
-
-        elif intent_type == "cancel":
-            if doctor and datetime_param:
-                dt = parse_datetime_param(datetime_param)
-                if dt:
-                    is_confirmation = llm_response.get("is_confirmation", False)
-                    appointment_dt = dt.astimezone(LOCAL_TIMEZONE).replace(tzinfo=None)
-                    if is_confirmation:
-                        success, message = cancel_appointment_flow(doctor, appointment_dt)
-                        reply = message if success else f"No appointment found for {doctor} at {appointment_dt.strftime('%I:%M %p')}."
-                    # else: reply already set by LLM (confirmation question)
-
-
-        # === Step 3: Return combined response ===
-        return jsonify({"reply": reply})
+        # === Step 4: Return the final response ===
+        return jsonify({"reply": final_answer})
 
     except Exception as e:
         print(f"[ERROR] chat() failed: {e}")
@@ -165,5 +152,5 @@ def chat():
 # Entry Point
 # ----------------------------------------
 if __name__ == "__main__":
-    print(f"Running Flask app with timezone: {LOCAL_TIMEZONE.tzname(datetime.now())}")
+    print("Running Flask app with ReAct agent...")
     app.run(debug=True, port=5000)
